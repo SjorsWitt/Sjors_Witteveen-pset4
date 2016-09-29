@@ -15,6 +15,6 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:gravity="center_vertical"
-        android:id="@+id/to_do_text"/>
+        android:id="@+id/to_do_text" />
 
 </LinearLayout>
