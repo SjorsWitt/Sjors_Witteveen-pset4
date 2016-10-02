@@ -7,7 +7,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class DBhelper extends SQLiteOpenHelper {
 
@@ -49,16 +48,19 @@ public class DBhelper extends SQLiteOpenHelper {
         db.close();
     }
 
-    public ArrayList<String> read() {
-        ArrayList<String> toDoItems = new ArrayList<>();
+    public ArrayList<ToDoItem> read() {
+        ArrayList<ToDoItem> toDoItems = new ArrayList<>();
         SQLiteDatabase db = getReadableDatabase();
 
-        String query = "SELECT to_do_text FROM to_do_items";
+        String query = "SELECT _id , to_do_text , checked FROM to_do_items";
         Cursor cursor = db.rawQuery(query, null);
 
         while (cursor.moveToNext()) {
+            int id_int = cursor.getInt(cursor.getColumnIndex(_id));
             String to_do_text_string = cursor.getString(cursor.getColumnIndex(to_do_text));
-            toDoItems.add(to_do_text_string);
+            Boolean checked_boolean = cursor.getInt(cursor.getColumnIndex(checked)) > 0;
+            ToDoItem toDoItem = new ToDoItem(id_int, to_do_text_string, checked_boolean);
+            toDoItems.add(toDoItem);
         }
 
         cursor.close();
@@ -73,14 +75,16 @@ public class DBhelper extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(checked, toDoItem.checked);
 
-        db.update(to_do_items, values, _id + " = ?", new String[] {String.valueOf(_id)});
+        db.update(to_do_items, values, _id + " = ?", new String[]{String.valueOf(toDoItem.id)});
 
         db.close();
     }
 
-    public void delete(String to_do_text_string) {
+    public void delete(ToDoItem toDoItem) {
         SQLiteDatabase db = getWritableDatabase();
-        db.delete(to_do_items, to_do_text + " = ?", new String[] {to_do_text_string});
+
+        db.delete(to_do_items, _id + " = ?", new String[]{String.valueOf(toDoItem.id)});
+
         db.close();
     }
 

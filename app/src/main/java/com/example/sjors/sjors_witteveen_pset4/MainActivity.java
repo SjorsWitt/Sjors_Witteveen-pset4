@@ -1,41 +1,46 @@
 package com.example.sjors.sjors_witteveen_pset4;
 
-import android.graphics.Paint;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-
 public class MainActivity extends AppCompatActivity {
+
+    private final String FIRST_RUN = "first run";
 
     private DBhelper dbhelper;
 
     private EditText addItem;
     private ListView toDoList;
 
-    private ArrayAdapter adapter;
-    private ArrayList<String> toDoItems;
+    private MyAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        dbhelper = new DBhelper(this);
-        toDoItems = dbhelper.read();
-
         addItem = (EditText) findViewById(R.id.add_item);
         toDoList = (ListView) findViewById(R.id.to_do_list);
 
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, toDoItems);
+        dbhelper = new DBhelper(this);
+
+        SharedPreferences pref = getSharedPreferences("pref", MODE_PRIVATE);
+        if (pref.getBoolean(FIRST_RUN, true)) {
+            dbhelper.create(new ToDoItem("Welcome to your To-Do List!"));
+            dbhelper.create(new ToDoItem("Type a new to-do item below."));
+            dbhelper.create(new ToDoItem("Long-press an item to remove it."));
+            pref.edit().putBoolean(FIRST_RUN, false).apply();
+        }
+
+        adapter = new MyAdapter(this, dbhelper.read());
         toDoList.setAdapter(adapter);
 
         // EditText input action listener
@@ -45,12 +50,12 @@ public class MainActivity extends AppCompatActivity {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     ToDoItem toDoItem = new ToDoItem(addItem.getText().toString());
                     dbhelper.create(toDoItem);
-                    toDoItems.add(addItem.getText().toString());
-                    adapter.notifyDataSetChanged();
+                    adapter.clear();
+                    adapter.addAll(dbhelper.read());
                     addItem.getText().clear();
                     return true;
                 }
-                return false;
+                return true;
             }
         });
 
@@ -58,22 +63,21 @@ public class MainActivity extends AppCompatActivity {
         toDoList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                TextView text1 = (TextView) view.findViewById(android.R.id.text1);
-                if (text1.getPaintFlags() == Paint.STRIKE_THRU_TEXT_FLAG) {
-                    text1.setPaintFlags(0);
-                } else {
-                    text1.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
-                }
+                dbhelper.update(adapter.getItem(position).switchChecked());
+
+                adapter.notifyDataSetChanged();
             }
         });
 
+        // toDoList long click action listener
         toDoList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                TextView text1 = (TextView) view.findViewById(android.R.id.text1);
-                dbhelper.delete(text1.getText().toString());
-                toDoItems.remove(position);
+                dbhelper.delete(adapter.getItem(position));
+
+                adapter.remove(adapter.getItem(position));
                 adapter.notifyDataSetChanged();
+
                 return true;
             }
         });
