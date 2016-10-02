@@ -1,3 +1,9 @@
+/*
+ * By Sjors Witteveen
+ * Extension of SQLiteOpenHelper. This class creates and manages a table consisting of ToDoItem
+ * objects. CRUD (create, read, update & delete) methods are implemented in this class.
+ */
+
 package com.example.sjors.sjors_witteveen_pset4;
 
 import android.content.ContentValues;
@@ -13,15 +19,18 @@ public class DBhelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "firstdb.db";
     private static final int DATABASE_VERSION = 1;
 
+    // table/column names
     String to_do_items = "to_do_items";
     String _id = "_id";
     String to_do_text = "to_do_text";
     String checked = "checked";
 
+    // constructor
     public DBhelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+    // creates table with an integer, a text and a boolean
     @Override
     public void onCreate(SQLiteDatabase db) {
         String query = "CREATE TABLE to_do_items ( _id INTEGER PRIMARY KEY AUTOINCREMENT , " +
@@ -37,6 +46,7 @@ public class DBhelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
+    // puts a ToDoItem in the to_do_items table
     public void create(ToDoItem toDoItem) {
         SQLiteDatabase db = getWritableDatabase();
 
@@ -48,6 +58,7 @@ public class DBhelper extends SQLiteOpenHelper {
         db.close();
     }
 
+    // reads to_do_items table and returns ToDoItems in an ArrayList
     public ArrayList<ToDoItem> read() {
         ArrayList<ToDoItem> toDoItems = new ArrayList<>();
         SQLiteDatabase db = getReadableDatabase();
@@ -55,6 +66,7 @@ public class DBhelper extends SQLiteOpenHelper {
         String query = "SELECT _id , to_do_text , checked FROM to_do_items";
         Cursor cursor = db.rawQuery(query, null);
 
+        // loop through cursor
         while (cursor.moveToNext()) {
             int id_int = cursor.getInt(cursor.getColumnIndex(_id));
             String to_do_text_string = cursor.getString(cursor.getColumnIndex(to_do_text));
@@ -69,6 +81,7 @@ public class DBhelper extends SQLiteOpenHelper {
         return toDoItems;
     }
 
+    // updates ToDoItem checked/unchecked in to_do_items table
     public void update(ToDoItem toDoItem) {
         SQLiteDatabase db = getWritableDatabase();
 
@@ -80,6 +93,7 @@ public class DBhelper extends SQLiteOpenHelper {
         db.close();
     }
 
+    // deletes ToDoItem from to_do_items table
     public void delete(ToDoItem toDoItem) {
         SQLiteDatabase db = getWritableDatabase();
 
